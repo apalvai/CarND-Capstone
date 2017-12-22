@@ -1,4 +1,5 @@
 
+import rospy
 from pid import PID
 from yaw_controller import YawController
 
@@ -19,11 +20,23 @@ class Controller(object):
 
 	self.pid = PID(kp, ki, kd, mn=min_val, mx=max_val)
 
-    def control(self, desired_linear_velocity, desired_angular_velocity, current_linear_velocity, sample_time):
+    def control(self, desired_linear_velocity, desired_angular_velocity, current_linear_velocity, dbw_enabled, sample_time):
         
+	rospy.logdebug('desired velocity: %f, desired angular velocity: %f, current velocity: %f', desired_linear_velocity, desired_angular_velocity, current_linear_velocity)
+	
+	# Reset the pid controller when DBW mode is disabled
+	if dbw_enabled is False:
+	    self.pid.reset()
+	    return 0, 0, 0
+
 	# Determine the throttle/brake based on desired and current velocities using PID
 	error = desired_linear_velocity - current_linear_velocity
+	rospy.logdebug('error: %f', error)
 	step_val = self.pid.step(error, sample_time)
+	rospy.logdebug('step_val: %f', step_val)
+	
+	throttle = 0
+	brake = 0
 	
 	if step_val > 0.0:
 	    throttle = step_val
