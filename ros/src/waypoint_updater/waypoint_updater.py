@@ -5,6 +5,7 @@ from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 
 import math
+import tf
 
 '''
 This node will publish waypoints from the car's current position to some `x` distance ahead.
@@ -26,27 +27,45 @@ LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this n
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node('waypoint_updater')
+        rospy.init_node('waypoint_updater', log_level=rospy.DEBUG)
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
+	# rospy.Subscriber('/traffic_waypoint', waypoints, self.traffic_cb)
+	# rospy.Subscriber('/obstacle_waypoint', Lane, self.obstacle_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
-
+	
         # TODO: Add other member variables you need below
+	self.current_pose = None
+	self.base_waypoints = None
+	self.closest_waypoint_ahead = None
+	self.final_waypoints = Lane()
+	# self.target_velocity = rospy.get_param('~target_velocity')
+	params = rospy.get_param_names()
+	for i in range(len(params)):
+		rospy.logdebug("%s", params[i])
 
         rospy.spin()
 
     def pose_cb(self, msg):
-        # TODO: Implement
-        pass
+        # Save the current_pos
+	self.current_pose = msg
+	rospy.logdebug('current position: %f,%f', self.current_pose.pose.position.x, self.current_pose.pose.position.y)	
+	
+	# TODO(AP): Remove this once traffic_cb is implemented
+	self.final_waypoints = self.get_next_waypoints()
+	
+	# Publish the final_waypoints
+	if self.final_waypoints is not None:
+            self.final_waypoints_pub.publish(self.final_waypoints)
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
-        pass
+        # Save the received waypoints
+	self.base_waypoints = waypoints.waypoints
+	rospy.logdebug('received waypoints: %d', len(self.base_waypoints))
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
@@ -56,6 +75,80 @@ class WaypointUpdater(object):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
         pass
 
+    # Helper functions
+    def get_next_waypoints(self):
+	
+	# Determine the closest_waypoint from current position
+	closest_waypoint_index = self.get_closest_waypoint_index()
+	
+	if closest_waypoint_index is None or self.base_waypoints is None:
+	    return
+	
+	closest_waypoint = self.base_waypoints[closest_waypoint_index]
+	rospy.logdebug('closest : %s, %s ', closest_waypoint.pose.pose.position.x, closest_waypoint.pose.pose.position.y)
+	
+	# check whether the closest_waypoint is behind the vehicle or ahead. If behind, chose the waypoint next to it.
+	x, y = self.get_local_coordinates(closest_waypoint)
+	
+	total_waypoints = len(self.base_waypoints)
+	
+	if x < 0:
+	    closest_waypoint_index = (closest_waypoint_index + 1) % total_waypoints
+	
+	lane = Lane()
+	for i in range(LOOKAHEAD_WPS):
+	    index = (closest_waypoint_index + i) % total_waypoints
+	    lane.waypoints.append(self.base_waypoints[index])
+	
+        return lane
+
+    def get_closest_waypoint_index(self):
+	# Based on current position and base_waypoints, compute the closest waypoint ahead.
+	if self.current_pose is None or self.base_waypoints is None:
+	    return
+	
+	min_distance = 1E7
+	closest_waypoint_index = -1E4
+	dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+	for index, waypoint in enumerate(self.base_waypoints):
+	    distance = dl(self.current_pose.pose.position, waypoint.pose.pose.position)
+	    
+	    if distance < min_distance:
+	        min_distance = distance
+		closest_waypoint_index = index
+	
+	return closest_waypoint_index
+
+    def get_local_coordinates(self, waypoint):
+	# Convert given waypoint from global to car's local coordinates.
+	
+	if self.current_pose is None or waypoint is None:
+	    return
+	
+	cx, cy = self.current_pose.pose.position.x, self.current_pose.pose.position.y
+	wx, wy = waypoint.pose.pose.position.x, waypoint.pose.pose.position.y
+	
+	_,yaw,_ = self.get_angular_params(self.current_pose.pose.orientation)	
+	
+	# shift
+	x, y = wx - cx, wy - cy
+	
+	# rotate
+	local_x = x * math.cos(yaw) + y * math.sin(yaw)
+	local_y = y * math.cos(yaw) - x * math.sin(yaw)
+	
+	return local_x, local_y
+
+    def get_angular_params(self, orientation):
+	
+	if orientation is None:
+	    return
+	
+	roll, pitch, yaw = tf.transformations.euler_from_quaternion([orientation.x, orientation.y, orientation.z, orientation.w])
+	
+	return roll, pitch, yaw
+
+    # Pre-defined Helper functions
     def get_waypoint_velocity(self, waypoint):
         return waypoint.twist.twist.linear.x
 
