@@ -44,7 +44,8 @@ class WaypointUpdater(object):
 	self.base_waypoints = None
 	self.closest_waypoint_ahead = None
 	self.final_waypoints = Lane()
-	# self.target_velocity = rospy.get_param('~target_velocity')
+	self.deceleration = rospy.get_param('~deceleration', 2) # Acceleration should not exceed 10 m/s^2
+	self.target_velocity = rospy.get_param('~target_velocity', 22.3)
 	params = rospy.get_param_names()
 	for i in range(len(params)):
 		rospy.logdebug("%s", params[i])
@@ -57,7 +58,7 @@ class WaypointUpdater(object):
 	rospy.logdebug('current position: %f,%f', self.current_pose.pose.position.x, self.current_pose.pose.position.y)	
 	
 	# TODO(AP): Remove this once traffic_cb is implemented
-	self.final_waypoints = self.get_next_waypoints()
+	# self.final_waypoints = self.get_next_waypoints()
 	
 	# Publish the final_waypoints
 	if self.final_waypoints is not None:
@@ -70,9 +71,31 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-	light_waypoint_index = msg
-	if light_waypoint_index != -1:
+	light_waypoint_index = msg.data
+	if light_waypoint_index is None:
+	    return
+	
+	self.final_waypoints, final_waypoint_indices = self.get_next_waypoints()
+	if self.final_waypoints is None:
+	   return
+	
+	if light_waypoint_index == -1:
+	    # RED light is OFF - drive at target velocity
+	    rospy.logdebug('Found a traffic light in non-RED state')
+	    for index in range(len(self.final_waypoints.waypoints)):
+		self.set_waypoint_velocity(self.final_waypoints.waypoints, index, self.target_velocity)
+	else:
+	    # RED light is ON - decelerate to STOP at light_waypoint_index
 	    rospy.logdebug('Found a traffic light in RED state')
+	    for index, waypoint_index in enumerate(final_waypoint_indices):
+		distance = self.distance(self.base_waypoints, waypoint_index, light_waypoint_index)
+		target_velocity = 0.0		
+		if distance > 0:
+		    target_velocity = math.sqrt(distance * 2 * self.deceleration)
+		
+		# chose the minimum velocity
+		target_velocity = min(self.target_velocity, target_velocity)
+	        self.set_waypoint_velocity(self.final_waypoints.waypoints, index, target_velocity)
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -81,6 +104,22 @@ class WaypointUpdater(object):
     # Helper functions
     def get_next_waypoints(self):
 	
+	closest_waypoint_index = self.get_closest_waypoint_index_ahead()
+	if closest_waypoint_index is None or self.base_waypoints is None:
+	    return
+	
+	total_waypoints = len(self.base_waypoints)
+	
+	indices = []
+	lane = Lane()
+	for i in range(LOOKAHEAD_WPS):
+	    index = (closest_waypoint_index + i) % total_waypoints
+	    lane.waypoints.append(self.base_waypoints[index])
+	    indices.append(index)
+	
+        return lane, indices
+
+    def get_closest_waypoint_index_ahead(self):
 	# Determine the closest_waypoint from current position
 	closest_waypoint_index = self.get_closest_waypoint_index()
 	
@@ -98,12 +137,7 @@ class WaypointUpdater(object):
 	if x < 0:
 	    closest_waypoint_index = (closest_waypoint_index + 1) % total_waypoints
 	
-	lane = Lane()
-	for i in range(LOOKAHEAD_WPS):
-	    index = (closest_waypoint_index + i) % total_waypoints
-	    lane.waypoints.append(self.base_waypoints[index])
-	
-        return lane
+	return closest_waypoint_index
 
     def get_closest_waypoint_index(self):
 	# Based on current position and base_waypoints, compute the closest waypoint ahead.
