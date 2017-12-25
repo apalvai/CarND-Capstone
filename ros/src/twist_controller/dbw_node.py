@@ -89,10 +89,10 @@ class DBWNode(object):
 		
 		rospy.logdebug('throttle: %f, brake: %f, steering: %f', throttle, brake, steering)
 	    	
-	    	# You should only publish the control commands if dbw is enabled
-            	if self.dbw_enabled is True:
-		    rospy.logdebug('Publishing throttle, break and steer commands...')
-                    self.publish(throttle, brake, steering)
+	    	# TODO: You should only publish the control commands if dbw is enabled
+            	# if self.dbw_enabled is True:
+		rospy.logdebug('Publishing throttle, break and steer commands...')
+                self.publish(throttle, brake, steering)
 	    
             rate.sleep()
 
