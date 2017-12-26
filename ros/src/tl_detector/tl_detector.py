@@ -187,10 +187,6 @@ class TLDetector(object):
 	if self.pose is None:
 	    return light_wp, state
 	
-	# car_position = None
-	# if(self.pose):
-        #     car_position = self.get_closest_waypoint(self.pose.pose)
-	
 	if self.use_lights_state is True:
 	    
 	    if self.lights is None:
@@ -218,8 +214,8 @@ class TLDetector(object):
 		    stop_line_pose.position.x = coord[0]
 		    stop_line_pose.position.y = coord[1]
 		    
-		    # distance between stop_line and closest light					
-		    distance = dl(stop_line_pose.position, light.pose.pose.position)					
+		    # distance between stop_line and closest light
+		    distance = dl(stop_line_pose.position, light.pose.pose.position)
 		    
 		    # relative position of stop line w.r.t car
 		    dist_x, dist_y = self.get_local_coordinates(self.pose.pose, stop_line_pose)

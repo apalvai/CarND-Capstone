@@ -23,7 +23,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
@@ -44,7 +44,7 @@ class WaypointUpdater(object):
 	self.base_waypoints = None
 	self.closest_waypoint_ahead = None
 	self.final_waypoints = Lane()
-	self.deceleration = rospy.get_param('~deceleration', 2) # Acceleration should not exceed 10 m/s^2
+	self.deceleration = rospy.get_param('~deceleration', 5) # Acceleration should not exceed 10 m/s^2
 	self.target_velocity = rospy.get_param('~target_velocity', 22.3)
 	params = rospy.get_param_names()
 	for i in range(len(params)):
@@ -55,10 +55,7 @@ class WaypointUpdater(object):
     def pose_cb(self, msg):
         # Save the current_pos
 	self.current_pose = msg
-	rospy.logdebug('current position: %f,%f', self.current_pose.pose.position.x, self.current_pose.pose.position.y)	
-	
-	# TODO(AP): Remove this once traffic_cb is implemented
-	# self.final_waypoints = self.get_next_waypoints()
+	# rospy.logdebug('current position: %f,%f', self.current_pose.pose.position.x, self.current_pose.pose.position.y)	
 	
 	# Publish the final_waypoints
 	if self.final_waypoints is not None:
@@ -67,36 +64,35 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         # Save the received waypoints
 	self.base_waypoints = waypoints.waypoints
-	rospy.logdebug('received waypoints: %d', len(self.base_waypoints))
+	# rospy.logdebug('received waypoints: %d', len(self.base_waypoints))
 
     def traffic_cb(self, msg):
-        # TODO: Callback for /traffic_waypoint message. Implement
+        # Callback for /traffic_waypoint message. Implement
 	light_waypoint_index = msg.data
 	if light_waypoint_index is None:
 	    return
 	
 	self.final_waypoints, final_waypoint_indices = self.get_next_waypoints()
-	if self.final_waypoints is None:
+	if self.final_waypoints is None or final_waypoint_indices is None:
 	   return
 	
 	if light_waypoint_index == -1:
-	    # RED light is OFF - drive at target velocity
-	    rospy.logdebug('Found a traffic light in non-RED state')
+	    # There is no RED light - drive at target velocity
 	    for index in range(len(self.final_waypoints.waypoints)):
 		self.set_waypoint_velocity(self.final_waypoints.waypoints, index, self.target_velocity)
 	else:
 	    # RED light is ON - decelerate to STOP at light_waypoint_index
 	    rospy.logdebug('Found a traffic light in RED state')
 	    for index, waypoint_index in enumerate(final_waypoint_indices):
-		distance = self.distance(self.base_waypoints, waypoint_index, light_waypoint_index)
-		target_velocity = 0.0		
-		if distance > 0:
-		    target_velocity = math.sqrt(distance * 2 * self.deceleration)
+		target_velocity = 0.0
+		# distance = self.distance(self.base_waypoints, waypoint_index, light_waypoint_index)
+		# if distance > 0:
+		#     target_velocity = math.sqrt(distance * 2 * self.deceleration)
 		
 		# chose the minimum velocity
 		target_velocity = min(self.target_velocity, target_velocity)
 	        self.set_waypoint_velocity(self.final_waypoints.waypoints, index, target_velocity)
-
+	
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
         pass
@@ -106,6 +102,7 @@ class WaypointUpdater(object):
 	
 	closest_waypoint_index = self.get_closest_waypoint_index_ahead()
 	if closest_waypoint_index is None or self.base_waypoints is None:
+	    rospy.logdebug('Unable to find closest_waypoint_index_ahead')
 	    return
 	
 	total_waypoints = len(self.base_waypoints)
@@ -122,12 +119,12 @@ class WaypointUpdater(object):
     def get_closest_waypoint_index_ahead(self):
 	# Determine the closest_waypoint from current position
 	closest_waypoint_index = self.get_closest_waypoint_index()
-	
 	if closest_waypoint_index is None or self.base_waypoints is None:
+	    rospy.logdebug('Unable to find closest_waypoint_index')
 	    return
 	
 	closest_waypoint = self.base_waypoints[closest_waypoint_index]
-	rospy.logdebug('closest : %s, %s ', closest_waypoint.pose.pose.position.x, closest_waypoint.pose.pose.position.y)
+	# rospy.logdebug('closest : %s, %s ', closest_waypoint.pose.pose.position.x, closest_waypoint.pose.pose.position.y)
 	
 	# check whether the closest_waypoint is behind the vehicle or ahead. If behind, chose the waypoint next to it.
 	x, y = self.get_local_coordinates(closest_waypoint)
@@ -142,6 +139,7 @@ class WaypointUpdater(object):
     def get_closest_waypoint_index(self):
 	# Based on current position and base_waypoints, compute the closest waypoint ahead.
 	if self.current_pose is None or self.base_waypoints is None:
+	    rospy.logdebug('Missing current_pose or base_waypoints')
 	    return
 	
 	min_distance = 1E7

@@ -58,14 +58,14 @@ class DBWNode(object):
 	self.dbw_enabled = False
 	self.twist_cmd = None
 
-	self.rate = 50 # 50Hz
+	self.rate = 10 # 10Hz
 	self.sample_time = 1./self.rate
 	
 	# Create YawController object
 	self.yaw_controller = YawController(wheel_base, steer_ratio, 0.0, max_lat_accel, max_steer_angle)
 
         # TODO: Create `TwistController` object
-        self.controller = Controller(self.yaw_controller)
+        self.controller = Controller(self.yaw_controller, vehicle_mass, wheel_radius)
 
         # TODO: Subscribe to all the topics you need to
 	rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb, queue_size=1)

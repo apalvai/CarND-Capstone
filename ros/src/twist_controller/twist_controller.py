@@ -8,9 +8,11 @@ ONE_MPH = 0.44704
 
 
 class Controller(object):
-    def __init__(self, yaw_controller):
+    def __init__(self, yaw_controller, vehicle_mass, wheel_radius):
         # TODO: Implement
 	self.yaw_controller = yaw_controller
+	self.vehicle_mass = vehicle_mass
+	self.wheel_radius = wheel_radius
 	
 	kp = 0.2
 	ki = 0.001
@@ -38,10 +40,13 @@ class Controller(object):
 	throttle = 0
 	brake = 0
 	
-	if step_val > 0.0:
-	    throttle = step_val
+	if desired_linear_velocity < 0.1 and current_linear_velocity < 0.1:
+	    brake = self.vehicle_mass * self.wheel_radius * 0.2
 	else:
-	    brake = -step_val
+	    if step_val > 0.0:
+	    	throttle = step_val
+	    else:
+	    	brake = -step_val * self.vehicle_mass * self.wheel_radius
 	
 	# Determine steering angle based on desired and current velocities using YawController
 	steer = self.yaw_controller.get_steering(desired_linear_velocity, desired_angular_velocity, current_linear_velocity)
