@@ -23,8 +23,8 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
-
+LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+STOP_BUFFER_DISTANCE = 3
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -44,8 +44,8 @@ class WaypointUpdater(object):
 	self.base_waypoints = None
 	self.closest_waypoint_ahead = None
 	self.final_waypoints = Lane()
-	self.deceleration = rospy.get_param('~deceleration', 5) # Acceleration should not exceed 10 m/s^2
-	self.target_velocity = rospy.get_param('~target_velocity', 22.3)
+	self.deceleration = rospy.get_param('~deceleration', 0.5)
+	self.target_velocity = rospy.get_param('~target_velocity', 11.1)
 	params = rospy.get_param_names()
 	for i in range(len(params)):
 		rospy.logdebug("%s", params[i])
@@ -83,16 +83,25 @@ class WaypointUpdater(object):
 	else:
 	    # RED light is ON - decelerate to STOP at light_waypoint_index
 	    rospy.logdebug('Found a traffic light in RED state')
+	    dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2)
 	    for index, waypoint_index in enumerate(final_waypoint_indices):
 		target_velocity = 0.0
+		distance = dl(self.base_waypoints[waypoint_index].pose.pose.position, self.base_waypoints[light_waypoint_index].pose.pose.position) - STOP_BUFFER_DISTANCE
 		# distance = self.distance(self.base_waypoints, waypoint_index, light_waypoint_index)
-		# if distance > 0:
-		#     target_velocity = math.sqrt(distance * 2 * self.deceleration)
+		x = self.base_waypoints[waypoint_index].pose.pose.position.x
+		y = self.base_waypoints[waypoint_index].pose.pose.position.y
+		# rospy.logdebug('distance to traffic light from waypoint at x: %f, y: %f is %f', x, y, distance)
+		if distance > 0.0:
+		    target_velocity = math.sqrt(distance * self.deceleration)
 		
 		# chose the minimum velocity
 		target_velocity = min(self.target_velocity, target_velocity)
+		# rospy.logdebug('desired velocity at waypoint x: %f, y: %f is %f', x, y, target_velocity)
 	        self.set_waypoint_velocity(self.final_waypoints.waypoints, index, target_velocity)
-	
+	    
+	# publish the final waypoints when it is RED light
+	self.final_waypoints_pub.publish(self.final_waypoints)
+
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
         pass
