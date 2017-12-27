@@ -24,7 +24,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
-STOP_BUFFER_DISTANCE = 3
+STOP_BUFFER_DISTANCE = 5
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -45,7 +45,7 @@ class WaypointUpdater(object):
 	self.closest_waypoint_ahead = None
 	self.final_waypoints = Lane()
 	self.deceleration = rospy.get_param('~deceleration', 0.5)
-	self.target_velocity = rospy.get_param('~target_velocity', 11.1)
+	self.target_velocity = rospy.get_param('~target_velocity', 22.3)
 	params = rospy.get_param_names()
 	for i in range(len(params)):
 		rospy.logdebug("%s", params[i])

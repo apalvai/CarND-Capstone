@@ -40,13 +40,13 @@ class Controller(object):
 	throttle = 0
 	brake = 0
 	
-	if desired_linear_velocity < 0.1 and current_linear_velocity < 0.1:
-	    brake = self.vehicle_mass * self.wheel_radius * 0.2
+	if desired_linear_velocity < 0.2 and current_linear_velocity < 0.2:
+	    brake = self.vehicle_mass * self.wheel_radius
 	else:
 	    if step_val > 0.0:
 	    	throttle = step_val
 	    else:
-	    	brake = -step_val * self.vehicle_mass * self.wheel_radius
+	    	brake = -step_val * self.vehicle_mass * self.wheel_radius * 5
 	
 	# Determine steering angle based on desired and current velocities using YawController
 	steer = self.yaw_controller.get_steering(desired_linear_velocity, desired_angular_velocity, current_linear_velocity)
