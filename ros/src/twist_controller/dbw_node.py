@@ -62,7 +62,7 @@ class DBWNode(object):
 	self.sample_time = 1./self.rate
 	
 	# Create YawController object
-	self.yaw_controller = YawController(wheel_base, steer_ratio, 0.0, max_lat_accel, max_steer_angle)
+	self.yaw_controller = YawController(wheel_base, steer_ratio, 1.0, max_lat_accel, max_steer_angle)
 
         # TODO: Create `TwistController` object
         self.controller = Controller(self.yaw_controller, vehicle_mass, wheel_radius)
