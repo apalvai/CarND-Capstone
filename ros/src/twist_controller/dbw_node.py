@@ -87,12 +87,12 @@ class DBWNode(object):
 								    self.dbw_enabled,
 								    self.sample_time)
 		
-		rospy.logdebug('throttle: %f, brake: %f, steering: %f', throttle, brake, steering)
+		# rospy.logdebug('throttle: %f, brake: %f, steering: %f', throttle, brake, steering)
 	    	
 	    	# TODO: You should only publish the control commands if dbw is enabled
-            	# if self.dbw_enabled is True:
-		rospy.logdebug('Publishing throttle, break and steer commands...')
-                self.publish(throttle, brake, steering)
+            	if self.dbw_enabled is True:
+		    # rospy.logdebug('Publishing throttle, break and steer commands...')
+                    self.publish(throttle, brake, steering)
 	    
             rate.sleep()
 
@@ -115,21 +115,21 @@ class DBWNode(object):
         self.brake_pub.publish(bcmd)
 
     def current_velocity_cb(self, current_velocity):
-	rospy.logdebug('received current velocity: %f, %f, %f', 
-			current_velocity.twist.linear.x, 
-			current_velocity.twist.linear.y, 
-			current_velocity.twist.linear.z)
+	# rospy.logdebug('received current velocity: %f, %f, %f', 
+	# 		current_velocity.twist.linear.x, 
+	# 		current_velocity.twist.linear.y, 
+	# 		current_velocity.twist.linear.z)
 	self.current_velocity = current_velocity
 
     def dbw_enabled_cb(self, dbw_enabled):
 	rospy.logdebug('dbw_enabled: %r', dbw_enabled)
-	self.dbw_enabled = dbw_enabled
+	self.dbw_enabled = dbw_enabled.data
 
     def twist_cmd_cb(self, twist_cmd):
-	rospy.logdebug('received twist_cmd: %f, %f, %f', 
-			twist_cmd.twist.linear.x, 
-			twist_cmd.twist.linear.y, 
-			twist_cmd.twist.linear.z)
+	# rospy.logdebug('received twist_cmd: %f, %f, %f', 
+	# 		twist_cmd.twist.linear.x, 
+	# 		twist_cmd.twist.linear.y, 
+	# 		twist_cmd.twist.linear.z)
 	self.twist_cmd = twist_cmd
 
 if __name__ == '__main__':
