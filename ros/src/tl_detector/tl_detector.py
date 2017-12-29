@@ -54,7 +54,7 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 	
-	self.use_lights_state = False
+	self.use_lights_state = True # Make it false to enable the classifier.
 
         rospy.spin()
 
