@@ -2,5 +2,5 @@
 <launch>
     <node pkg="waypoint_updater" type="waypoint_updater.py" name="waypoint_updater" />
         <param name="deceleration" value="0.5" />
-        <param name="target_velocity" value="22.3" />
+        <param name="target_velocity" value="11.3" />
 </launch>
