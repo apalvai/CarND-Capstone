@@ -1,0 +1,56 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{hyphen\}}{\leveltext\leveltemplateid202\'01\uc0\u8259 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid301\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid4}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+
+\b System Integration Project:
+\b0 \
+Goal of this project was to integrate the components like path planning, traffic light detection and classification and control of a self driving car. My implementation was able to drive the car on Udacity provided simulator track.\
+\
+
+\b Path Planning:
+\b0 \
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls1\ilvl0\cf0 {\listtext	\'95	}WaypointUpdater node is responsible for publishing waypoints along the road that car has to follow.\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls2\ilvl0\cf0 {\listtext	\'95	}This node uses the waypoints of the track and updates them (velocity at each waypoint) based on the current position of car and detection of red lights ahead. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+
+\b Traffic Light Detection & Classification:
+\b0 \
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls3\ilvl0\cf0 {\listtext	\'95	}This node is responsible for detection and classification of traffic lights on the track.\
+{\listtext	\'95	}Detection and classification uses MobileNet tensorflow model ({\field{\*\fldinst{HYPERLINK "https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/image_retraining"}}{\fldrslt https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/image_retraining}}) re-trained with simulator images\
+{\listtext	\'95	}Model is trained to detect 4 different states\
+\pard\tx940\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li1440\fi-1440\pardirnatural\partightenfactor0
+\ls3\ilvl1\cf0 {\listtext	\uc0\u8259 	}None\
+{\listtext	\uc0\u8259 	}Green\
+{\listtext	\uc0\u8259 	}Yellow\
+{\listtext	\uc0\u8259 	}Red\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls3\ilvl0\cf0 {\listtext	\'95	}This node has a flag \'91use_lights_state\'92 to determine whether to use ground truth provided by \'91/vehcile/traffic_lights\'92 topic (which contains the location of traffic light and it\'92s state) or to determine based on the captured camera images. For real world purposes, we cannot rely on the light state provided by the topic.\
+{\listtext	\'95	}This node uses the camera images and determines whether there are any traffic lights ahead of it, it\'92s state and determines the closest waypoint associated with the stop line of that light.\
+{\listtext	\'95	}It publishes the detected light state (if any) along with the waypoint index of the stop line.\
+{\listtext	\'95	}The published points are then used by the WaypointUpdater node, to publish the next set of points (with updated velocities) that car has to follow.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+
+\b Control:
+\b0 \
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls4\ilvl0\cf0 {\listtext	\'95	}DBW (Drive By Wire) node is responsible for issuing the control commands like throttle, brake and steering angle, so as to make car follow the waypoints published by WaypointUpdater node.\
+{\listtext	\'95	}DBW node uses PID controller and LowPassFilter to determine the throttle/brake to be applied and make sure the canes are smooth\
+{\listtext	\'95	}This node uses YawController to determine the steering angle based on desired and current velocities.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+}
