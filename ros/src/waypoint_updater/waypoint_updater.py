@@ -45,7 +45,7 @@ class WaypointUpdater(object):
 	self.closest_waypoint_ahead = None
 	self.final_waypoints = Lane()
 	self.deceleration = rospy.get_param('~deceleration', 0.5)
-	self.target_velocity = rospy.get_param('~target_velocity', 22.3)
+	self.target_velocity = rospy.get_param('~target_velocity', 11.3)
 	params = rospy.get_param_names()
 	for i in range(len(params)):
 		rospy.logdebug("%s", params[i])

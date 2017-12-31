@@ -2,6 +2,7 @@
 import rospy
 from pid import PID
 from yaw_controller import YawController
+from lowpass import LowPassFilter
 
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
@@ -19,8 +20,11 @@ class Controller(object):
 	kd = 0.1
 	min_val = -1.0
 	max_val = 1.0
+	tau = 20.0
+	ts = 1.0
 
 	self.pid = PID(kp, ki, kd, mn=min_val, mx=max_val)
+	self.lpf = LowPassFilter(tau, ts)
 
     def control(self, desired_linear_velocity, desired_angular_velocity, current_linear_velocity, dbw_enabled, sample_time):
         
@@ -34,6 +38,7 @@ class Controller(object):
 	# Determine the throttle/brake based on desired and current velocities using PID
 	error = desired_linear_velocity - current_linear_velocity
 	step_val = self.pid.step(error, sample_time)
+	step_val = self.lpf.filt(step_val)	
 	
 	throttle = 0
 	brake = 0
